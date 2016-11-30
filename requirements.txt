@@ -1,0 +1,8 @@
+cython
+psycopg2
+sqlalchemy
+flask
+numpy
+scipy
+sklearn
+joblib

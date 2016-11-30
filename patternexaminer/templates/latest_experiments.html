@@ -1,0 +1,56 @@
+<table class="table table-bordered table-hover">
+  <tbody>
+    <tr>
+      <th>#</th>
+      <th>Input</th>
+      <th>Algorithm</th>
+      <th>Re.Name | Parent</th>
+      <th>Re.Pattern | Label</th>
+      <th>Lines</th>
+      <th>Clusters</th>
+      <!-- <th>Preprocessing</th> -->
+      <th>Status</th>
+      <!-- <th>Start Time</th> -->
+    </tr>
+
+
+    {% for experiment in latest_experiments %}
+      <tr experiment_id="{{ experiment.id }}">
+        <td>{{ experiment.id }}</td>
+        <td>{{ experiment.input_type }}</td>
+        <td>{{ experiment.algorithm|replace('Clustering', '') }}</td>
+        <td>
+          {{ experiment.regex_name }} 
+          {{ " | " + experiment.parent_experiment_id|string if experiment.parent_experiment_id }}
+        </td>
+        <td>
+          <div title="{{ experiment.regex_pattern if experiment.regex_pattern != '*' else '' }}" data-toggle="tooltip" data-placement="top">
+            {{ experiment.regex_pattern[:20]|safe }}
+            {{ " | " + experiment.parent_experiment_label|string if experiment.parent_experiment_label != None }}
+          </div>
+        </td>
+        <td>{{ experiment.lines if experiment.lines else '' }}</td>
+        <td>{{ experiment.clusters_count if experiment.clusters_count else '' }}</td>
+        <!-- <td>{# experiment.processing #}</td> -->
+        
+        {% if experiment.traceback %}
+          <td class="statusCell errorStatus" data-toggle="popover" title="Traceback" data-placement="top" data-content="{{ experiment.traceback }}">
+        {% else %}
+          <td class="statusCell">
+        {% endif %}
+          
+          {% if experiment.status == 'finished' %}  
+            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+          {% elif experiment.status == 'running' %}  
+            <span class="glyphicon glyphicon-option-horizontal" aria-hidden="true"></span>
+          {% else %}  
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+          {% endif %}
+
+          </td>
+
+        <!-- <td>{{ experiment.start_time }}</td> -->
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

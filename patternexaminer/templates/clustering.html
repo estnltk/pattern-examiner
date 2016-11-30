@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  
+  <title>Clustering sentences</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+  <!-- Remove leading slash -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css')[1:] }}">
+
+
+</head>
+<body>
+
+  <div class="container-fluid">
+
+    <div class="row">
+
+      <div class="col-md-3 col-md-offset-1">
+
+        <form id="clusterForm" class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Input type: </label>
+            <div class="col-sm-7">
+              <select name="input_type" class="form-control">
+                  {% for rec in form_data['input_types'] %}
+                    <option value="{{ rec.id }}" {{ 'selected' if rec.id == selected_inputs['algorithm'] }}>{{ rec.name }}</option>
+                  {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Clustering: </label>
+            <div class="col-sm-7">
+              <select name="clustering" class="form-control">
+                  {% for rec in form_data['algorithms'] %}
+                    <option value="{{ rec.id }}" {{ 'selected' if rec.id == selected_inputs['algorithm'] }}>{{ rec.name|replace('Clustering', '') }}</option>
+                  {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-sm-4 control-label">Preprocessing: </label>
+            <div class="col-sm-7">
+              <select name="preprocessing" class="form-control">
+                  {% for rec in form_data['processing_methods'] %}
+                    <option value="{{ rec.id }}" {{ 'selected' if rec.id == selected_inputs['processing_method'] }}>{{ rec.name }}</option>
+                  {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          {% if form_data['regex_names'] %}
+            <div class="form-group">
+              <label class="col-sm-4 control-label">Regex name: </label>
+              <div class="col-sm-7">
+                <select name="regex_name" class="form-control">
+                    {% for rec in form_data['regex_names'] %}
+                      <option value="{{ rec.id }}" {{ 'selected' if rec.id == selected_inputs['regex_name'] }}>{{ rec.name }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if form_data['regex_patterns'] %}
+            <div class="form-group">
+              <label class="col-sm-4 control-label">Regex pattern: </label>
+              <div class="col-sm-7">
+                <select name="regex_pattern" class="form-control">
+                    {% for rec in form_data['regex_patterns'] %}
+                      <option value="{{ rec.id }}" name_id="{{ rec.name_id }}" {{ 'selected' if rec.id == selected_inputs['regex_pattern'] }}>{{ rec.pattern }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+            </div>
+          {% endif %}
+
+        </form>
+
+        <div class="form-group">
+          <div class="col-sm-offset-4 col-sm-3 clusterContainer">
+            <a id="clusterBtn" class="btn btn-default btn-lg btn-primary">Cluster</a>
+          </div>
+        </div>
+
+      </div>
+      
+      <div class="col-md-7">
+      <label class="experimentLabel">Latest Experiments <span id="experimentLoading">...</span></label>
+        <div id="latest_experiments"></div>
+      </div>
+
+    </div>
+
+    <div class="row resultRow">
+      <div class="col-md-10 col-md-offset-1">
+        <form id="sampling-form" autocomplete="off">
+          Sampling: |
+          <div class="radio inline">
+            <label><input type="radio" name="sampleOption" value="random" checked>Random</label>
+          </div> | 
+          <div class="radio inline">
+            <label><input type="radio" name="sampleOption" value="heterogenous" disabled>Heterogenous</label>
+          </div> |
+
+          Size: 
+          <input id="sample_size" name="sample_size" type="number" class="form-control" min="0" value="10" step="5">
+          <div class="checkbox inline">
+            <label><input type="checkbox" name="sample_all" value="1">All</label>
+          </div> |
+
+          <div class="checkbox inline">
+            <label><input type="checkbox" name="sample-observed" value="1">Observed</label>
+          </div> |<br>
+
+          Filtering: |
+          <div class="checkbox inline">
+            <label><input type="checkbox" name="filteringType" value="and" disabled>and</label>
+          </div> |
+          <div class="checkbox inline">
+            <label><input type="checkbox" name="filteringType" value="or">or</label>
+          </div> |<br>
+
+          Clusters:<br>
+          <div id="labelsCounts"></div>
+
+          <div id="statistics"></div>
+
+          <span id="filteredStats"></span>
+
+          <div id="filterBoxes" class="col-md-12">
+            <div class="col-md-4"><input type="text" class="form-control filter-input" name="left_filter"></div>
+            <div class="col-md-4"><input type="text" class="form-control filter-input" name="content_filter"></div>
+            <div class="col-md-4"><input type="text" class="form-control filter-input" name="right_filter"></div>
+          </div>
+
+        </form>
+        <div class="btn-group col-md-12 groupButtons" role="group">
+          <a type="button" class="btn btn-default col-md-6" id="evaluatePositive">Positive</a>
+          <a type="button" class="btn btn-default col-md-6" id="evaluateNegative">Negative</a>
+        </div>
+        <div id="clusterSample" oncontextmenu="return false;"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="       sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+  <!-- [1:] to remove the leading slash -->
+  <script src="{{ url_for('static', filename='script.js')[1:] }}"></script>
+  
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

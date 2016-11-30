@@ -1,0 +1,49 @@
+<table class="table table-bordered table-nonfluid">
+  <tbody>
+
+    <tr>
+      <th></th>
+      {% if total_stats %}
+        <th>Total</th>
+      {% endif %}
+      <th>Experiment</th>
+      {% if cluster_stats %}
+        <th>Cluster</th>
+      {% endif %}
+    </tr>      
+    
+    <tr>
+      <th>Positive</th>
+      {% if total_stats %}
+        <td>{{ total_stats.positive }}</td>
+      {% endif %}
+      <td>{{ experiment_stats.positive }}</td>
+      {% if cluster_stats %}
+        <td>{{ cluster_stats.positive }}</td>
+      {% endif %}
+    </tr>      
+
+    <tr>
+      <th>Negative</th>
+      {% if total_stats %}
+        <td>{{ total_stats.negative }}</td>
+      {% endif %}
+      <td>{{ experiment_stats.negative }}</td>
+      {% if cluster_stats %}
+        <td>{{ cluster_stats.negative }}</td>
+      {% endif %}
+    </tr>      
+
+    <tr>
+      <th>Observed</th>
+      {% if total_stats %}
+        <td>{{ total_stats.observed }}</td>
+      {% endif %}
+      <td>{{ experiment_stats.observed }}</td>
+      {% if cluster_stats %}
+        <td>{{ cluster_stats.observed }}</td>
+      {% endif %}
+    </tr>      
+
+  </tbody>
+</table>

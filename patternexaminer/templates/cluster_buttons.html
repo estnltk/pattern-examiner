@@ -1,0 +1,4 @@
+{% for cluster_label, count in label_counts.items() %}
+  <a class="btn btn-default"  experiment_id="{{ experiment_id }}" cluster_label="{{ cluster_label }}">{{ count }}</a>
+{% endfor %}
+<a class="btn btn-default"  experiment_id="{{ experiment_id }}" cluster_label="{{ all_clusters_label }}">All</a>

@@ -1,0 +1,8 @@
+# Do not add postgres.ini to git as it contains username and password
+postgresconf/postgres.ini
+
+
+# Python cache files - do not add them to git
+__pycache__/
+*.py[cod]
+*$py.class

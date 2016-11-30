@@ -1,0 +1,85 @@
+body {
+  padding-top: 50px;
+}
+
+.clusterContainer {
+    margin-right: 9px;
+}
+
+.table {
+    white-space: nowrap;
+}
+
+#clusterSample table {
+    white-space: pre-line;
+}
+
+.tooltip-inner {
+    white-space: nowrap;
+    max-width: none;
+}
+
+.statusCell {
+    text-align: center;
+}
+
+.errorStatus {
+    cursor: pointer;
+}
+
+.leftColumn {
+    text-align: right;
+}
+.middleColumn {
+    text-align: center;
+}
+.rightColumn {
+    text-align: left;
+}
+
+.inline {
+    display: inline-block;
+}
+
+#experimentLoading {
+    display: none;
+}
+
+#latest_experiments {
+    overflow-y: scroll;
+    height: 300px;
+    border-bottom: 1px solid #ddd;
+}
+
+.experimentLabel {
+    position: absolute;
+    top: -28px;
+}
+
+.resultRow {
+    padding-top: 30px;
+}
+
+#filterBoxes {
+    padding-top: 10px;
+    display: none;
+}
+
+#sample_size {
+    width: 70px;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+.groupButtons {
+    padding: 15px 0px 15px 0px;
+    visibility: hidden;
+}
+
+#statistics {
+    padding-top: 15px;
+}
+
+.table-nonfluid {
+   width: auto !important;
+}

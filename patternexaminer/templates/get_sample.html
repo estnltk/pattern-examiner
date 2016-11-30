@@ -1,0 +1,17 @@
+<table class="table table-bordered table-hover">
+  {% for sentence in sentences %}
+    <tr 
+      {% if sentence.evaluation == True %}
+        class="success"
+      {% elif sentence.evaluation == False %}
+        class="danger"
+      {% endif %}
+
+      result_id="{{ sentence.result_id }}">
+      
+      <td class="leftColumn">{{ sentence.left_context }}</td>
+      <td class="middleColumn">{{ sentence.text }}</td>
+      <td class="rightColumn">{{ sentence.right_context }}</td>
+    </tr>
+  {% endfor %}
+</table>
