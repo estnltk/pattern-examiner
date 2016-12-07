@@ -262,7 +262,7 @@ class Clustering:
     def cache_features(self, cache_id, sentences):
         print('cache features to the array db object')
         features = self.construct_decision_tree_features(sentences)
-        CACHED_ARRAYS[cache_id]['features'] = features
+        CACHED_ARRAYS[str(cache_id)]['features'] = features
 
 
     def construct_cached_arrays(self, sentences, sentence_indexes):
@@ -318,7 +318,7 @@ class Clustering:
         if similar_experiment:
             print('found similar experiment, getting arrays from db')
             cache_id = similar_experiment.cached_arrays_id
-            cached_arrays = CACHED_ARRAYS[cache_id]
+            cached_arrays = CACHED_ARRAYS[str(cache_id)]
             self.experiment.cached_arrays_id = cache_id
 
         else:
