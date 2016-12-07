@@ -7,8 +7,8 @@ import subprocess
 from collections import defaultdict
 import json
 
+import h5py
 import numpy as np
-
 from scipy.special import betaincinv
 
 from sqlalchemy import func, distinct
@@ -145,78 +145,17 @@ def clusters_sizes():
             all_clusters_label=ALL_CLUSTERS_LABEL)
 
 
-@app.route('/get_heterogenous_sample')
-def get_heterogenous_sample():
+@app.route('/get_sample')
+def get_sample():
 
-    experiment_id = request.args.get('experiment_id', 0, type=int)
-    label = request.args.get('label', 0, type=int)
-    sample_size = request.args.get('sample_size', 0, type=int)
-    sample_all = request.args.get('sample_all', 0, type=bool)
-    
-    filepath = db_session.query(Experiment).filter(Experiment.id == experiment_id).one().cos_sim_filepath
-    
-    dumped_object = pickle.load(open(filepath, 'rb'))
-    
-    cosine_similarities = dumped_object['cosine_similarities']
-    sentence_indexes = dumped_object['sentence_indexes']
-    
-    rows = db_session.query(Result).filter(Result.experiment_id == experiment_id, Result.label == label)
-    cluster_indexes = []
-    result_ids = []
-    evaluations = []
-    for row in rows:
-        cluster_indexes.append(sentence_indexes.index(row.sentence_id))
-        result_ids.append(row.id)
-        evaluations.append(row.evaluation)
-
-    cosine_similarities = cosine_similarities[cluster_indexes][:,cluster_indexes]
-    sentence_indexes = np.array(sentence_indexes)[cluster_indexes]
-
-    indexes = np.array([np.random.randint(len(cosine_similarities))])
-    for i in range(min(len(cluster_indexes)-1, sample_size-1)):
-        distance_array = np.sum(cosine_similarities[indexes], axis=0)
-        distance_array[indexes] = np.inf
-        argmax = np.argwhere(distance_array == np.min(distance_array)).flatten()
-        max_index = np.random.choice(argmax,1)
-        indexes = np.append(indexes, max_index)
-
-    homogenous_sentence_indexes = sentence_indexes[indexes]
-    homogenous_sentence_result_ids = np.array(result_ids)[indexes]
-    homogenous_sentence_evaluations = np.array(evaluations)[indexes]
-
-    sentences = []
-    for i in range(len(indexes)):
-        index = homogenous_sentence_indexes[i]
-        result_id = homogenous_sentence_result_ids[i]
-        evaluation = homogenous_sentence_evaluations[i]
-
-        row = db_session.query(WorkExtractedNumber).filter(WorkExtractedNumber.id == int(index)).one()
-        left_context = clean_text(row.left_context)
-        text = clean_text(row.content)
-        right_context = clean_text(row.right_context)
-
-        sentences.append({
-            'result_id': result_id,
-            'evaluation': evaluation, 
-            'left_context': left_context,
-            'text': text,
-            'right_context': right_context
-        })
-        
-    return render_template(
-        'get_sample.html', 
-        sentences=sentences)
-
-
-@app.route('/get_random_sample')
-def get_random_sample():
-
+    sample_type = request.args.get('type', type=str)
     experiment_id = request.args.get('experiment_id', 0, type=int)
     label = request.args.get('label', 0, type=int)
     sample_size = request.args.get('sample_size', 0, type=int)
     sample_all = request.args.get('sample_all', 0, type=int)
     sample_observed = request.args.get('sample-observed', 0, type=int)
 
+    filtering_type = request.args.get('filtering-type', type=str)
     left_filter = request.args.get('left_filter', type=str)
     content_filter = request.args.get('content_filter', type=str)
     right_filter = request.args.get('right_filter', type=str)
@@ -238,25 +177,65 @@ def get_random_sample():
     records = query.all()
     if left_filter or content_filter or right_filter:
         filtered_records = []
+        if filtering_type == 'or':
+            filter_base = [False, False, False]
+        if filtering_type == 'and':
+            filter_base = [not left_filter, not content_filter, not right_filter]
         for rec in records:
-            match = False
-            if left_filter and re.search(left_filter, getattr(rec,InputDocument.__name__).left_context):
-                match = True
-            if content_filter and re.search(content_filter, getattr(rec,InputDocument.__name__).content):
-                match = True
-            if right_filter and re.search(right_filter, getattr(rec,InputDocument.__name__).right_context):
-                match = True
+            # match = False
+            filter_matches = list(filter_base)
+            if left_filter and re.search(left_filter, getattr(rec,InputDocument.__name__).left_context.lower()):
+                filter_matches[0] = True
+            if content_filter and re.search(content_filter, getattr(rec,InputDocument.__name__).content.lower()):
+                filter_matches[1] = True
+            if right_filter and re.search(right_filter, getattr(rec,InputDocument.__name__).right_context.lower()):
+                filter_matches[2] = True
+            
+            if filtering_type == 'or':
+                match = filter_matches[0] or filter_matches[1] or filter_matches[2]
+            if filtering_type == 'and':
+                match = filter_matches[0] and filter_matches[1] and filter_matches[2]
             if match:
                 filtered_records.append(rec)
         records = filtered_records
         filtered_size = len(records)
     else:
         filtered_size = 0
+    
+    if sample_type == 'random':
+        random.shuffle(records)
+        if not sample_all:
+            records = records[:sample_size]
 
-    random.shuffle(records)
+    if sample_type == 'heterogenous':
+        cached_arrays_id = db_session.query(Experiment).filter(Experiment.id == experiment_id).one().cached_arrays_id
+        with h5py.File("cached_arrays.hdf5") as f:
+            cached_arrays = f[cached_arrays_id]
+            cosine_similarities = np.array(cached_arrays['cosine_similarities'])
+            sentence_indexes = np.array(cached_arrays['sentence_indexes'])
 
-    if not sample_all:
-        records = records[:sample_size]
+        cluster_indexes = []
+        result_ids = []
+        evaluations = []
+        for rec in records:
+            cluster_indexes.append(np.where(sentence_indexes==getattr(rec,Result.__name__).sentence_id)[0][0])
+
+        cosine_similarities = cosine_similarities[cluster_indexes][:,cluster_indexes]
+        sentence_indexes = np.array(sentence_indexes)[cluster_indexes]
+
+        indexes = np.array([np.random.randint(len(cosine_similarities))])
+        for i in range(min(len(cluster_indexes)-1, sample_size-1)):
+            distance_array = np.sum(cosine_similarities[indexes], axis=0)
+            distance_array[indexes] = np.inf
+            argmax = np.argwhere(distance_array == np.min(distance_array)).flatten()
+            max_index = np.random.choice(argmax,1)
+            indexes = np.append(indexes, max_index)
+
+        # print(indexes)
+        homogenous_records = []
+        for index in indexes:
+            homogenous_records.append(records[index])
+        records = homogenous_records
 
     sentences = []
     for rec in records:
@@ -274,7 +253,7 @@ def get_random_sample():
         })
 
     sentences = sorted(sentences, key=lambda x: x['text'])
-    
+
     return jsonify(
                 html=render_template('get_sample.html', sentences=sentences),
                 filteredSize=filtered_size)

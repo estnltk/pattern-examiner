@@ -132,7 +132,7 @@ $(document).ready(function() {
   // $('select[name=input_type]').change();
 
   // Give the filtering and/or checkboxes a bit of a radio button feel, for comfort. 
-  $("input[name=filteringType").click(function() {
+  $("input[name=filtering-type").click(function() {
     var group = "input:checkbox[name='"+$(this).prop("name")+"']";
     var checked = !$(this).prop("checked");
     $(group).prop("checked",false);
@@ -229,18 +229,12 @@ function setEvaluation(resultId, evaluation) {
 function getSample() {
 
     var sampleType = $('input[name=sampleOption]:checked').val();
-    if (sampleType == 'random') {
-      var sampleUrl = 'get_random_sample?';
-    }
-    if (sampleType == 'heterogenous') {
-      var sampleUrl = 'get_heterogenous_sample?';
-    }
-
     samplingParameters = $('#sampling-form').serializeArray();
     samplingParameters.push({name: 'experiment_id', value: selectedExperiment});
     samplingParameters.push({name: 'label', value: selectedLabel});
+    samplingParameters.push({name: 'type', value: sampleType});
 
-    $.getJSON(sampleUrl, samplingParameters, function(result) {
+    $.getJSON('get_sample', samplingParameters, function(result) {
       showEvaluationButtons();
       $('#clusterSample').html(result.html)
       if (result.filteredSize != 0) {
